@@ -26,12 +26,13 @@ describe("Constant Sum Automated Market", function () {
 
     csamm = await CSAMM.deploy(token0.address, token1.address)
     await csamm.deployed()
+
     // Approve contract to spend tokens
     await token0.approve(csamm.address, TOKENS_TO_MINT)
     await token1.approve(csamm.address, TOKENS_TO_MINT)
   })
 
-  it("Should add liquidity", async function () {
+  it("Should add, swap and remove liquidity", async function () {
 
     /* Add Liquidity */
     await csamm.addLiquidity(TOKENS_TO_MINT/2, TOKENS_TO_MINT/2)
@@ -43,13 +44,14 @@ describe("Constant Sum Automated Market", function () {
     let balanceOf = await csamm.balanceOf(owner.address)
 
     expect(shares).to.equal(balanceOf)
+    expect(reserves0).to.equal(TOKENS_TO_MINT/2)
+    expect(reserves1).to.equal(TOKENS_TO_MINT/2)
 
     /* Swap Tokens */
     await csamm.swap(token0.address, TOKENS_TO_MINT/2)
 
     let token0bal = await token0.balanceOf(owner.address)
     let token1bal = await token1.balanceOf(owner.address)
-    
     
     reserves0 = await csamm.reserve0()
     reserves1 = await csamm.reserve1()
@@ -59,7 +61,7 @@ describe("Constant Sum Automated Market", function () {
     expect(token1bal).to.equal(TOKENS_TO_MINT)
 
     /* Remove Liquididty */
-    await csamm.removeLiquidity(balanceOf/2)
+    await csamm.removeLiquidity(balanceOf)
 
     reserves0 = await csamm.reserve0()
     reserves1 = await csamm.reserve1()
@@ -68,11 +70,7 @@ describe("Constant Sum Automated Market", function () {
     token0bal = await token0.balanceOf(owner.address)
     token1bal = await token1.balanceOf(owner.address)
 
-    console.log(reserves0)
-    console.log(reserves1)
-    console.log(balanceOf)
-    console.log(token0bal)
-    console.log(token1bal)
+    const totalSupply = await csamm.totalSupply()
 
     expect(reserves0).to.equal(0)
     expect(reserves1).to.equal(0)
@@ -81,6 +79,6 @@ describe("Constant Sum Automated Market", function () {
     expect(token0bal).to.equal(TOKENS_TO_MINT)
     expect(token1bal).to.equal(TOKENS_TO_MINT)
 
-    // expect(await greeter.greet()).to.equal("Hola, mundo!")
+    expect(totalSupply).to.equal(0)
   })
 })

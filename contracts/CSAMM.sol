@@ -13,7 +13,7 @@ contract CSAMM {
     uint public reserve1;
     uint public totalSupply;
     uint public fee = 3;
-    mapping(address => uint) public balanceOf;
+    mapping(address => uint) public balanceOf; // Shares
 
     /* CONSTRUCTOR */
     constructor(address _token0, address _token1) {
@@ -88,6 +88,7 @@ contract CSAMM {
     function removeLiquidity(uint _shares) external 
         returns (uint amount0, uint amount1) 
     {
+        require(balanceOf[msg.sender] >= _shares, 'Insufficient Shares');
         // Convert share amount to token amount
         amount0 = (reserve0 * _shares) / totalSupply;
         amount1 = (reserve1 * _shares) / totalSupply;
@@ -99,10 +100,15 @@ contract CSAMM {
         _update(reserve0 - amount0, reserve1 - amount1);
 
         // Transfer out
-        if (amount0 > 0) {
+        if (amount0 > token0.balanceOf(address(this))) {
+            token0.transfer(msg.sender, token0.balanceOf(address(this)));
+        } else if (amount0 > 0) {
             token0.transfer(msg.sender, amount0);
         }
-        if (amount1 > 0) {
+
+        if (amount0 > token1.balanceOf(address(this))) {
+            token1.transfer(msg.sender, token1.balanceOf(address(this)));
+        } else if (amount1 > 0) {
             token1.transfer(msg.sender, amount1);
         }
     }
